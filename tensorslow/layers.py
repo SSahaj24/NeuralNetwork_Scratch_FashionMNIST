@@ -7,6 +7,13 @@ class ReLU:
     def forward(self, x):
         return (x > 0) * x
 
+class Softmax:
+    def __init__(self):
+        pass
+    def forward(self, x):
+        e_x = np.exp(x)
+        return e_x / e_x.sum(axis=1, keepdims=True)
+
 class Dense:
     def __init__(self, n, activation=None):
         self.n = n
