@@ -14,8 +14,10 @@ class Softmax:
     def __init__(self):
         return
     def forward(self, x):
-        e_x = np.exp(x)
-        return e_x / e_x.sum(axis=1, keepdims=True) # axis=0 is the batch
+        # e_x = np.exp(x)
+        # return e_x / e_x.sum(axis=1, keepdims=True) # axis=0 is the batch
+        e_x = np.exp(x - x.max(axis=1, keepdims=True))
+        return e_x / e_x.sum(axis=1, keepdims=True)
     # def backward(self,
 
 class Dense:
