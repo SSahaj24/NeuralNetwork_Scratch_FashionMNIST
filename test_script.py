@@ -3,6 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 from tensorflow.keras.datasets import fashion_mnist
 import matplotlib.pyplot as plt
+import numpy as np
 
 import tensorslow as ts
 
@@ -15,6 +16,9 @@ print("Train Labels", train_labels)
 print("Test Dim", test_images.shape)
 print("Test Label Count", len(test_labels))
 
+def to_one_hot(y, num_classes=10):
+    return np.eye(num_classes)[y] # y'th row of I 
+train_labels = to_one_hot(train_labels)
 # plt.figure()
 # plt.imshow(train_images[0])
 # plt.colorbar()
@@ -47,3 +51,14 @@ print("Layers: Flatten(28,28), Dense(128, ReLU), Dense(10), Softmax")
 output = model.forward(train_images[:32])
 print("Output Shape: ", output.shape)
 print("Output: ", output)
+
+model = ts.Sequential([
+    ts.layers.Flatten(input_shape=(28,28)),
+    ts.layers.Dense(128, activation='relu'),
+    ts.layers.Dense(10),
+    ts.layers.Softmax()
+])
+
+
+model.compile(loss='CategoricalCrossEntropy', optim='SGD', metric='accuracy')
+model.fit(train_images, train_labels, epochs=10)
