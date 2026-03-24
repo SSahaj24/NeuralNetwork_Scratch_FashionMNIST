@@ -10,13 +10,35 @@ class Sequential:
         self.metric = None
     
     def compile(self, loss=None, optim=None, metric=None):
-        if loss=='CategoricalCrossEntropy':
-            self.loss = losses.CategoricalCrossEntropy()
+        if isinstance(loss, str):
+            if loss=='CategoricalCrossEntropy':
+                self.loss = losses.CategoricalCrossEntropy()
+            else:
+                raise NotImplementedError(f"{loss} not implemented")
+        else:
+            self.loss = loss
+        if self.loss:
             self.loss.model = self
-        if optim=='SGD':
-            self.optimizer = optimizers.SGD()
-        if metric=='accuracy':
-            self.metric = metrics.Accuracy()
+
+        if isinstance(optim, str):
+            if optim=='SGD':
+                self.optimizer = optimizers.SGD()
+            elif optim=='NesterovGD':
+                self.optimizer = optimizers.NesterovGD(lr=0.01)
+            elif optim=="Adam":
+                self.optimizer = optimizers.Adam()
+            else:
+                raise NotImplementedError(f"{optim} not implemented")
+        else:
+            self.optimizer = optim
+    
+        if isinstance(metric, str):
+            if metric=='accuracy':
+                self.metric = metrics.Accuracy()
+            else:
+                raise NotImplementedError(f"{metric} not implemented")
+        else:
+            self.metric = metric
 
     def forward(self, x):
         for layer in self.layers:
@@ -49,5 +71,16 @@ class Sequential:
 
                 self.backward(y_batch, y_pred)
                 self.optimizer.step(self)
-            num_batches = train_x.shape[0] // batch_size
+            # num_batches = train_x.shape[0] // batch_size
+            num_batches = np.ceil(train_x.shape[0] / batch_size)
             print(f"Epoch {epoch+1}/{epochs} - loss: {epoch_loss/num_batches:.4f} - acc: {epoch_acc/num_batches:.4f}")
+    
+    def predict(self, x):
+        return self.forward(x)
+
+    def evaluate(self, x, y):
+        y_pred = self.forward(x)
+        loss = self.loss(y, y_pred)
+        metric = self.metric(y, y_pred) if self.metric else None
+        print(f"{self.loss.__class__.__name__} Loss: {loss:.4f} - {self.metric.__class__.__name__} Metric: {metric:.4f}")
+        return loss, metric

@@ -5,6 +5,8 @@ class CategoricalCrossEntropy:
         self.label_smoothing = label_smoothing
         self.model = None # Set at instance creation
     def __call__(self, y_true, y_pred):
+        eps = 1e-9
+        y_pred = np.clip(y_pred, eps, 1-eps)
         if self.label_smoothing:
             y_true = y_true * (1-self.label_smoothing) + (self.label_smoothing / y_true.shape[1])
         loss = -np.sum( y_true * np.log(y_pred), axis = 1)

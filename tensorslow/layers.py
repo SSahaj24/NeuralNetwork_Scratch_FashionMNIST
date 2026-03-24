@@ -14,8 +14,6 @@ class Softmax:
     def __init__(self):
         return
     def forward(self, x):
-        # e_x = np.exp(x)
-        # return e_x / e_x.sum(axis=1, keepdims=True) # axis=0 is the batch
         e_x = np.exp(x - x.max(axis=1, keepdims=True))
         return e_x / e_x.sum(axis=1, keepdims=True)
     # def backward(self,
@@ -23,7 +21,6 @@ class Softmax:
 class Dense:
     def __init__(self, n, activation=None):
         self.n = n
-        self.neurons = np.random.rand(n)
         self.W = None
         self.b = None
         self.x = None
@@ -36,7 +33,7 @@ class Dense:
         self.x = x
         if self.W is None:
             input_dim = x.shape[1]
-            self.W = np.random.randn(input_dim, self.n)
+            self.W = np.random.randn(input_dim, self.n) * np.sqrt(2. / input_dim) # TODO - BETTER INITIALIZATION?
             self.b = np.random.randn(1, self.n)
 
         z = x @ self.W + self.b
@@ -46,11 +43,13 @@ class Dense:
         return z
 
     def backward(self, grad):
+        self.grad = grad
         if self.activation:
-            grad = self.activation.backward(grad)
-        self.dW = self.x.T @ grad
-        self.db = grad.sum(axis=0, keepdims=True)
-        return grad @ self.W.T
+            self.grad = self.activation.backward(self.grad)
+        batch_size = self.x.shape[0]
+        self.dW = self.x.T @ self.grad / batch_size
+        self.db = self.grad.sum(axis=0, keepdims=True) / batch_size
+        return self.grad @ self.W.T
 
 
 class Flatten:

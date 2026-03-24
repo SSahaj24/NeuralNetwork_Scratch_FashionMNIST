@@ -39,26 +39,27 @@ test_images = test_images / 255.0
 #     plt.xlabel(class_names[train_labels[i]])
 # plt.show()
 
+# model = ts.Sequential([
+#     ts.layers.Flatten(input_shape=(28,28)),
+#     ts.layers.Dense(128, activation='relu'),
+#     ts.layers.Dense(10),
+#     ts.layers.Softmax()
+# ])
+#
+# print("Input Shape: ", train_images[:32].shape)
+# print("Layers: Flatten(28,28), Dense(128, ReLU), Dense(10), Softmax")
+# output = model.forward(train_images[:32])
+# print("Output Shape: ", output.shape)
+# print("Output: ", output)
+#
 model = ts.Sequential([
     ts.layers.Flatten(input_shape=(28,28)),
     ts.layers.Dense(128, activation='relu'),
     ts.layers.Dense(10),
     ts.layers.Softmax()
 ])
+model.compile(loss='CategoricalCrossEntropy', optim='Adam', metric='accuracy')
 
-print("Input Shape: ", train_images[:32].shape)
-print("Layers: Flatten(28,28), Dense(128, ReLU), Dense(10), Softmax")
-output = model.forward(train_images[:32])
-print("Output Shape: ", output.shape)
-print("Output: ", output)
+model.fit(train_images, train_labels, epochs=10, batch_size=256)
 
-model = ts.Sequential([
-    ts.layers.Flatten(input_shape=(28,28)),
-    ts.layers.Dense(128, activation='relu'),
-    ts.layers.Dense(10),
-    ts.layers.Softmax()
-])
-
-
-model.compile(loss='CategoricalCrossEntropy', optim='SGD', metric='accuracy')
-model.fit(train_images, train_labels, epochs=10)
+model.evaluate(test_images, to_one_hot(test_labels))
