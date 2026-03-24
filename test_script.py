@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import tensorslow as ts
+# from tensorslow.losses import CategoricalCrossEntropy
 
 (x_train, y_train),(x_test, y_test) = fashion_mnist.load_data()
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
@@ -58,8 +59,17 @@ model = ts.Sequential([
     ts.layers.Dense(10),
     ts.layers.Softmax()
 ])
-model.compile(loss='CategoricalCrossEntropy', optim='Nadam', metric='accuracy')
 
-model.fit(train_images, train_labels, epochs=10, batch_size=256)
+loss = ts.losses.CategoricalCrossEntropy(label_smoothing=0.01)
+
+# optim = ts.optimizers.SGD(lr=0.01)
+# optim = ts.optimizers.MomentumGD(lr=0.01, beta=0.9)
+# optim = ts.optimizers.NesterovGD(lr=0.01, beta=0.9)
+# optim = ts.optimizers.RMSprop(lr=0.01, beta=0.99)
+optim = ts.optimizers.Adam(lr=0.01, beta1=0.9, beta2=0.999)
+# optim = ts.optimizers.Nadam(lr=0.01, beta1=0.9, beta2=0.999)
+
+model.compile(loss=loss, optim=optim, metric='accuracy')
+model.fit(train_images, train_labels, epochs=10, batch_size=8)
 
 model.evaluate(test_images, to_one_hot(test_labels))

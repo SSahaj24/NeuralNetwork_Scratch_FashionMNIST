@@ -44,16 +44,19 @@ class NesterovGD:
 
 
 class RMSprop:
-    def __init__(self, lr=0.01, beta=0.999):
+    def __init__(self, lr=0.01, beta=0.9):
         self.lr = lr
         self.beta = beta
-        self.v = 0
+        self.v_W = defaultdict(lambda:0)
+        self.v_b = defaultdict(lambda:0)
         self.epsilon = 1e-8
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'dW'):
-                self.v = self.beta * self.v + (1-self.beta) * np.square(layer.dW)
-                self.w = self.w - self.eta / (np.sqrt(self.v + self.epsilon)) * layer.dW
+                self.v_W[layer] = self.beta * self.v_W[layer] + (1-self.beta) * (layer.dW)**2 
+                self.v_b[layer] = self.beta * self.v_b[layer] + (1-self.beta) * (layer.db)**2
+                layer.W -= self.lr / (np.sqrt(self.v_W[layer]) + self.epsilon) * layer.dW
+                layer.b -= self.lr / (np.sqrt(self.v_b[layer]) + self.epsilon) * layer.db
 
 class Adam:
     def __init__(self, lr=0.01, beta1=0.9, beta2=0.999):

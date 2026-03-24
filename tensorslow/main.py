@@ -1,4 +1,3 @@
-# model.fit(train_images, train_labels, epochs=10)
 from tensorslow import losses, optimizers, metrics
 import numpy as np
 
@@ -29,6 +28,8 @@ class Sequential:
                 self.optimizer = optimizers.Adam()
             elif optim=="Nadam":
                 self.optimizer = optimizers.Nadam()
+            elif optim=="RMSprop":
+                self.optimizer = optimizers.RMSprop()
             else:
                 raise NotImplementedError(f"{optim} not implemented")
         else:
