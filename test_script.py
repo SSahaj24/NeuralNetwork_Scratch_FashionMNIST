@@ -58,7 +58,7 @@ model = ts.Sequential([
     ts.layers.Dense(10),
     ts.layers.Softmax()
 ])
-model.compile(loss='CategoricalCrossEntropy', optim='Adam', metric='accuracy')
+model.compile(loss='CategoricalCrossEntropy', optim='Nadam', metric='accuracy')
 
 model.fit(train_images, train_labels, epochs=10, batch_size=256)
 

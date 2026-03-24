@@ -27,6 +27,8 @@ class Sequential:
                 self.optimizer = optimizers.NesterovGD(lr=0.01)
             elif optim=="Adam":
                 self.optimizer = optimizers.Adam()
+            elif optim=="Nadam":
+                self.optimizer = optimizers.Nadam()
             else:
                 raise NotImplementedError(f"{optim} not implemented")
         else:

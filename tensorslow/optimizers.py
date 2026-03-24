@@ -85,5 +85,29 @@ class Adam:
 
 
 class Nadam:
-    def __init__(self):
-        pass
+    def __init__(self, lr=0.01, beta1=0.9, beta2=0.999):
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.m_W = defaultdict(lambda:0) 
+        self.m_b = defaultdict(lambda:0)
+        self.v_W = defaultdict(lambda:0)
+        self.v_b = defaultdict(lambda:0)
+        self.t = 0
+        self.epsilon = 1e-8
+    def step(self, model):
+        self.t += 1
+        for layer in model.layers:
+            if hasattr(layer, 'dW'):
+                self.m_W[layer] = self.beta1 * self.m_W[layer] + (1-self.beta1) * layer.dW
+                self.v_W[layer] = self.beta2 * self.v_W[layer] + (1-self.beta2) * (layer.dW)**2 
+                self.m_b[layer] = self.beta1 * self.m_b[layer] + (1-self.beta1) * layer.db
+                self.v_b[layer] = self.beta2 * self.v_b[layer] + (1-self.beta2) * (layer.db)**2
+                
+                self.v_b_cap = self.v_b[layer] / (1 - self.beta2**self.t)
+                self.m_W_cap = self.m_W[layer] / (1 - self.beta1**self.t)
+                self.v_W_cap = self.v_W[layer] / (1 - self.beta2**self.t)
+                self.m_b_cap = self.m_b[layer] / (1 - self.beta1**self.t)
+
+                layer.W -= self.lr / (np.sqrt(self.v_W_cap) + self.epsilon) * (self.beta1 * self.m_W_cap + (1-self.beta1) * layer.dW / (1-self.beta1**(self.t+1)))
+                layer.b -= self.lr / (np.sqrt(self.v_b_cap) + self.epsilon) * (self.beta1 * self.m_b_cap + (1-self.beta1) * layer.db / (1-self.beta1**(self.t+1)))
