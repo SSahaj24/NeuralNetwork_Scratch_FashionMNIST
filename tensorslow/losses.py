@@ -14,6 +14,6 @@ class CategoricalCrossEntropy:
 
     def backward(self, y_true, y_pred):
         if self.model.layers[-1].__class__.__name__ == "Softmax":
-            return (y_pred - y_true) / y_true.shape[0]
+            return (y_pred - y_true)
         else:
             raise NotImplementedError("CCE backward is only implemented for Softmax output")

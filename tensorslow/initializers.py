@@ -1,6 +1,6 @@
 import numpy as np
 
-class RandomUniformInitializer:
+class RandomNormalInitializer:
     def __init__(self):
         return
     def __call__(self, n_in, n_out):

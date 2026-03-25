@@ -20,7 +20,7 @@ class Dense:
         if kernel_initializer=="xavier":
             self.initializer = ts.initializers.XavierUniformInitializer()
         else:
-            self.initializer = ts.initializers.RandomUniformInitializer()
+            self.initializer = ts.initializers.RandomNormalInitializer()
         
         if isinstance(kernel_regularizer, str):
             raise TypeError("Please pass the regularizer object")
