@@ -6,8 +6,13 @@ class SGD:
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'dW'): # To skip layers without params
-                layer.W -= self.lr * layer.dW
-                layer.b -= self.lr * layer.db
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+                dW = layer.dW + regularization_W
+                db = layer.db
+                layer.W -= self.lr * dW
 
 class MomentumGD:
     def __init__(self, lr=0.01, beta=0.9):
@@ -19,13 +24,19 @@ class MomentumGD:
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'W') and layer.W is not None:
-                self.u_W[layer] = self.beta * self.u_W[layer] + layer.dW
-                self.u_b[layer] = self.beta * self.u_b[layer] + layer.db
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+
+                dW = layer.dW + regularization_W
+                db = layer.db
+
+                self.u_W[layer] = self.beta * self.u_W[layer] + dW
                 layer.W -= self.lr * self.u_W[layer]
-                layer.b -= self.lr * self.u_b[layer]
 
 class NesterovGD:
-    def __init__(self, lr=0.01, beta=0.9):
+    def __init__(self, lr=0.01, beta=0.9, weight_decay=0.0005):
         self.lr = lr
         self.beta = beta
         self.u_W = defaultdict(lambda:0)
@@ -34,11 +45,18 @@ class NesterovGD:
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'dW'):
-                self.u_W[layer] = self.beta * self.u_W[layer] - self.lr * layer.dW
-                self.u_b[layer] = self.beta * self.u_b[layer] - self.lr * layer.db
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+                
+                dW = layer.dW + regularization_W
+                db = layer.db
 
-                layer.W += self.beta * self.u_W[layer] - self.lr * layer.dW
-                layer.b += self.beta * self.u_b[layer] - self.lr * layer.db
+                self.u_W[layer] = self.beta * self.u_W[layer] - self.lr * dW
+                self.u_b[layer] = self.beta * self.u_b[layer] - self.lr * db
+                layer.W += self.beta * self.u_W[layer] - (self.lr * dW)
+                layer.b += self.beta * self.u_b[layer] - (self.lr * db)
 
 
 class RMSprop:
@@ -51,10 +69,18 @@ class RMSprop:
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'dW'):
-                self.v_W[layer] = self.beta * self.v_W[layer] + (1-self.beta) * (layer.dW)**2 
-                self.v_b[layer] = self.beta * self.v_b[layer] + (1-self.beta) * (layer.db)**2
-                layer.W -= self.lr / (np.sqrt(self.v_W[layer]) + self.epsilon) * layer.dW
-                layer.b -= self.lr / (np.sqrt(self.v_b[layer]) + self.epsilon) * layer.db
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+                
+                dW = layer.dW + regularization_W
+                db = layer.db
+
+                self.v_W[layer] = self.beta * self.v_W[layer] + (1-self.beta) * dW**2 
+                self.v_b[layer] = self.beta * self.v_b[layer] + (1-self.beta) * db**2
+                layer.W -= self.lr / (np.sqrt(self.v_W[layer]) + self.epsilon) * dW
+                layer.b -= self.lr / (np.sqrt(self.v_b[layer]) + self.epsilon) * db
 
 class Adam:
     def __init__(self, lr=0.01, beta1=0.9, beta2=0.999):
@@ -71,10 +97,18 @@ class Adam:
         self.t += 1
         for layer in model.layers:
             if hasattr(layer, 'dW'):
-                self.m_W[layer] = self.beta1 * self.m_W[layer] + (1-self.beta1) * layer.dW
-                self.v_W[layer] = self.beta2 * self.v_W[layer] + (1-self.beta2) * (layer.dW)**2 
-                self.m_b[layer] = self.beta1 * self.m_b[layer] + (1-self.beta1) * layer.db
-                self.v_b[layer] = self.beta2 * self.v_b[layer] + (1-self.beta2) * (layer.db)**2
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+                
+                dW = layer.dW + regularization_W
+                db = layer.db 
+
+                self.m_W[layer] = self.beta1 * self.m_W[layer] + (1-self.beta1) * dW
+                self.v_W[layer] = self.beta2 * self.v_W[layer] + (1-self.beta2) * dW**2 
+                self.m_b[layer] = self.beta1 * self.m_b[layer] + (1-self.beta1) * db
+                self.v_b[layer] = self.beta2 * self.v_b[layer] + (1-self.beta2) * db**2
                 
                 self.v_b_cap = self.v_b[layer] / (1 - self.beta2**self.t)
                 self.m_W_cap = self.m_W[layer] / (1 - self.beta1**self.t)
@@ -100,10 +134,17 @@ class Nadam:
         self.t += 1
         for layer in model.layers:
             if hasattr(layer, 'dW'):
-                self.m_W[layer] = self.beta1 * self.m_W[layer] + (1-self.beta1) * layer.dW
-                self.v_W[layer] = self.beta2 * self.v_W[layer] + (1-self.beta2) * (layer.dW)**2 
-                self.m_b[layer] = self.beta1 * self.m_b[layer] + (1-self.beta1) * layer.db
-                self.v_b[layer] = self.beta2 * self.v_b[layer] + (1-self.beta2) * (layer.db)**2
+                if layer.regularizer:
+                    regularization_W = layer.regularizer(layer.W)
+                else:
+                    regularization_W = 0
+                dW = layer.dW + regularization_W
+                db = layer.db
+
+                self.m_W[layer] = self.beta1 * self.m_W[layer] + (1-self.beta1) * dW
+                self.v_W[layer] = self.beta2 * self.v_W[layer] + (1-self.beta2) * dW**2 
+                self.m_b[layer] = self.beta1 * self.m_b[layer] + (1-self.beta1) * db
+                self.v_b[layer] = self.beta2 * self.v_b[layer] + (1-self.beta2) * db**2
                 
                 self.v_b_cap = self.v_b[layer] / (1 - self.beta2**self.t)
                 self.m_W_cap = self.m_W[layer] / (1 - self.beta1**self.t)

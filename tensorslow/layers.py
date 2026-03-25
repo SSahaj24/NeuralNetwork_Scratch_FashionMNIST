@@ -2,8 +2,10 @@
 import numpy as np
 import tensorslow as ts
 
+# TODO - isinstance checking
+
 class Dense:
-    def __init__(self, n, activation=None, kernel_initializer=None):
+    def __init__(self, n, activation=None, kernel_initializer=None, kernel_regularizer=None):
         self.n = n
         self.W = None
         self.b = None
@@ -19,6 +21,11 @@ class Dense:
             self.initializer = ts.initializers.XavierUniformInitializer()
         else:
             self.initializer = ts.initializers.RandomUniformInitializer()
+        
+        if isinstance(kernel_regularizer, str):
+            raise TypeError("Please pass the regularizer object")
+        else:
+            self.regularizer = kernel_regularizer
 
     def forward(self, x):
         self.x = x

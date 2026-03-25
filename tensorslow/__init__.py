@@ -5,3 +5,4 @@ from . import optimizers
 from . import metrics
 from . import activations
 from . import initializers
+from . import regularizers

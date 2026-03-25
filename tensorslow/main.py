@@ -8,7 +8,7 @@ class Sequential:
         self.optim = None
         self.metric = None
         self.use_wandb = use_wandb
-    
+
     def compile(self, loss=None, optim=None, metric=None):
         if isinstance(loss, str):
             if loss=='CategoricalCrossEntropy':

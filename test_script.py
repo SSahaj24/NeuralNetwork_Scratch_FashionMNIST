@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import tensorslow as ts
+from tensorslow.regularizers import L1, L1L2, L2
 # from tensorslow.losses import CategoricalCrossEntropy
 
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
@@ -42,9 +43,9 @@ test_images = test_images / 255.0
 
 model = ts.Sequential([
     ts.layers.Flatten(input_shape=(28,28)),
-    ts.layers.Dense(128, activation="tanh", kernel_initializer="xavier"),
-    ts.layers.Dense(128, activation="tanh", kernel_initializer="xavier"),
-    ts.layers.Dense(128, activation="tanh", kernel_initializer="xavier"),
+    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005), kernel_initializer="xavier"),
+    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005), kernel_initializer="xavier"),
+    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005),  kernel_initializer="xavier"),
     ts.layers.Dense(10, activation="tanh"),
     ts.activations.Softmax()
 ])
