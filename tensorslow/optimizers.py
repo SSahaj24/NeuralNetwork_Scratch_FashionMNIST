@@ -6,8 +6,6 @@ class SGD:
     def step(self, model):
         for layer in model.layers:
             if hasattr(layer, 'dW'): # To skip layers without params
-                # dW = layer.x.T @ layer.grad
-                # db = layer.grad.sum(axis=0, keepdims=True)
                 layer.W -= self.lr * layer.dW
                 layer.b -= self.lr * layer.db
 

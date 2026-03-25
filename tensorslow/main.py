@@ -2,11 +2,12 @@ from tensorslow import losses, optimizers, metrics
 import numpy as np
 
 class Sequential:
-    def __init__(self, layers):
+    def __init__(self, layers, use_wandb=False):
         self.layers = layers
         self.loss = None
         self.optim = None
         self.metric = None
+        self.use_wandb = use_wandb
     
     def compile(self, loss=None, optim=None, metric=None):
         if isinstance(loss, str):
@@ -54,7 +55,8 @@ class Sequential:
             grad = layer.backward(grad)
         return grad
 
-    def fit(self, train_x, train_y, epochs, batch_size=32):
+    def fit(self, train_x, train_y, epochs, batch_size=32, val_data=None):
+        step = 0
         for epoch in range(epochs):
             # shuffle
             idx = np.random.permutation(train_x.shape[0])
@@ -68,16 +70,42 @@ class Sequential:
                 y_batch = train_y[i:i+batch_size]
 
                 y_pred = self.forward(x_batch)
-                epoch_loss += self.loss(y_batch, y_pred)
+                batch_loss = self.loss(y_batch, y_pred)
+                epoch_loss += batch_loss
                 if self.metric:
                     epoch_acc += self.metric(y_batch, y_pred)
-
                 self.backward(y_batch, y_pred)
                 self.optimizer.step(self)
+
+                if self.use_wandb:
+                    import wandb
+                    wandb.log({"batch_loss": batch_loss, "step": step})
+                step += 1
+
             # num_batches = train_x.shape[0] // batch_size
             num_batches = np.ceil(train_x.shape[0] / batch_size)
-            print(f"Epoch {epoch+1}/{epochs} - loss: {epoch_loss/num_batches:.4f} - acc: {epoch_acc/num_batches:.4f}")
-    
+            # print(f"Epoch {epoch+1}/{epochs} - loss: {epoch_loss/num_batches:.4f} - acc: {epoch_acc/num_batches:.4f}")
+            log = {
+                "epoch": epoch + 1,
+                "train_loss": epoch_loss / num_batches,
+                "train_accuracy": epoch_acc / num_batches,
+            }
+            # Validation
+            if val_data is not None:
+                val_x, val_y = val_data
+                val_pred = self.forward(val_x)
+                val_loss = self.loss(val_y, val_pred)
+                val_acc = self.metric(val_y, val_pred) if self.metric else 0
+                log["val_loss"] = val_loss
+                log["val_accuracy"] = val_acc
+                print(f"Epoch {epoch+1}/{epochs} - loss: {log['train_loss']:.4f} - acc: {log['train_accuracy']:.4f} - val_loss: {val_loss:.4f} - val_acc: {val_acc:.4f}")
+            else:
+                print(f"Epoch {epoch+1}/{epochs} - loss: {log['train_loss']:.4f} - acc: {log['train_accuracy']:.4f}")
+
+            if self.use_wandb:
+                import wandb
+                wandb.log(log)
+                
     def predict(self, x):
         return self.forward(x)
 
