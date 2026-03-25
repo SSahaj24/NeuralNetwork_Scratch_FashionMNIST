@@ -13,6 +13,7 @@ class SGD:
                 dW = layer.dW + regularization_W
                 db = layer.db
                 layer.W -= self.lr * dW
+                layer.b -= self.lr * db
 
 class MomentumGD:
     def __init__(self, lr=0.01, beta=0.9):
@@ -33,7 +34,9 @@ class MomentumGD:
                 db = layer.db
 
                 self.u_W[layer] = self.beta * self.u_W[layer] + dW
+                self.u_b[layer] = self.beta * self.u_b[layer] + db
                 layer.W -= self.lr * self.u_W[layer]
+                layer.b -= self.lr * self.u_b[layer]
 
 class NesterovGD:
     def __init__(self, lr=0.01, beta=0.9, weight_decay=0.0005):
