@@ -10,6 +10,7 @@ class Dense:
         self.W = None
         self.b = None
         self.x = None
+        self.reg_loss_W = 0
         if activation=="relu":
             self.activation = ts.activations.ReLU()
         elif activation=="tanh":
@@ -36,7 +37,8 @@ class Dense:
                 # self.W = np.random.randn(input_dim, self.n) * np.sqrt(2. / input_dim) # TODO - BETTER INITIALIZATION?
                 self.W = self.initializer(input_dim, self.n)
                 self.b = self.initializer(1, self.n)
-
+        if self.regularizer:
+            self.reg_loss_W = self.regularizer.loss(self.W)
         z = x @ self.W + self.b
 
         if self.activation:

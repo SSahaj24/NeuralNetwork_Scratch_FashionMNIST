@@ -5,6 +5,7 @@ class Sequential:
     def __init__(self, layers, use_wandb=False):
         self.layers = layers
         self.loss = None
+        self.reg_loss_W = 0
         self.optim = None
         self.metric = None
         self.use_wandb = use_wandb
@@ -45,12 +46,15 @@ class Sequential:
             self.metric = metric
 
     def forward(self, x):
+        self.reg_loss_W = 0
         for layer in self.layers:
             x = layer.forward(x)
+            if hasattr(layer, 'W'):
+                self.reg_loss_W += layer.reg_loss_W
         return x
 
-    def backward(self, y_true, y_pred):
-        grad = self.loss.backward(y_true, y_pred)
+    def backward(self):
+        grad = self.loss.backward()
         for layer in self.layers[-2::-1]:
             grad = layer.backward(grad)
         return grad
@@ -70,11 +74,11 @@ class Sequential:
                 y_batch = train_y[i:i+batch_size]
 
                 y_pred = self.forward(x_batch)
-                batch_loss = self.loss(y_batch, y_pred)
+                batch_loss = self.loss(y_batch, y_pred) + self.reg_loss_W
                 epoch_loss += batch_loss
                 if self.metric:
                     epoch_acc += self.metric(y_batch, y_pred)
-                self.backward(y_batch, y_pred)
+                self.backward()
                 self.optimizer.step(self)
 
                 if self.use_wandb:
@@ -94,7 +98,7 @@ class Sequential:
             if val_data is not None:
                 val_x, val_y = val_data
                 val_pred = self.forward(val_x)
-                val_loss = self.loss(val_y, val_pred)
+                val_loss = self.loss(val_y, val_pred) + self.reg_loss_W
                 val_acc = self.metric(val_y, val_pred) if self.metric else 0
                 log["val_loss"] = val_loss
                 log["val_accuracy"] = val_acc
@@ -111,7 +115,7 @@ class Sequential:
 
     def evaluate(self, x, y):
         y_pred = self.forward(x)
-        loss = self.loss(y, y_pred)
+        loss = self.loss(y, y_pred) + self.reg_loss_W
         metric = self.metric(y, y_pred) if self.metric else None
         print(f"{self.loss.__class__.__name__} Loss: {loss:.4f} - {self.metric.__class__.__name__} Metric: {metric:.4f}")
         return loss, metric

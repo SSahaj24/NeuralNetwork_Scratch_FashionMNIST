@@ -6,6 +6,12 @@ class RandomNormalInitializer:
     def __call__(self, n_in, n_out):
         return np.random.randn(n_in, n_out)
 
+class RandomUniformInitializer:
+    def __init__(self):
+        return
+    def __call__(self, n_in, n_out):
+        return np.random.uniform(n_in, n_out)
+
 class XavierUniformInitializer:
     def __init__(self):
         return

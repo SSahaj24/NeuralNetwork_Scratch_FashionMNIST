@@ -43,10 +43,12 @@ test_images = test_images / 255.0
 
 model = ts.Sequential([
     ts.layers.Flatten(input_shape=(28,28)),
-    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005), kernel_initializer="xavier"),
-    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005), kernel_initializer="xavier"),
-    ts.layers.Dense(128, activation="tanh", kernel_regularizer=L1(0.005),  kernel_initializer="xavier"),
-    ts.layers.Dense(10, activation="tanh"),
+    # ts.layers.Dense(256, activation="tanh", kernel_initializer="xavier"),
+    ts.layers.Dense(64, activation="relu", kernel_regularizer=L1(0.005), kernel_initializer="xavier"),
+    ts.layers.Dense(64, activation="relu", kernel_regularizer=L1(0.005),  kernel_initializer="xavier"),
+    ts.layers.Dense(32, activation="relu", kernel_regularizer=L1(0.005),  kernel_initializer="xavier"),
+    # ts.layers.Dense(32, activation="tanh", kernel_initializer="xavier"),
+    ts.layers.Dense(10),
     ts.activations.Softmax()
 ])
 
@@ -61,8 +63,8 @@ loss = ts.losses.CategoricalCrossEntropy(label_smoothing=0)
 # optim = ts.optimizers.MomentumGD(lr=0.01, beta=0.9)
 # optim = ts.optimizers.NesterovGD(lr=0.01, beta=0.9)
 # optim = ts.optimizers.RMSprop(lr=0.01, beta=0.99)
-# optim = ts.optimizers.Adam(lr=0.01, beta1=0.9, beta2=0.999)
-optim = ts.optimizers.Nadam(lr=0.0005, beta1=0.9, beta2=0.999)
+optim = ts.optimizers.Adam(lr=0.005, beta1=0.9, beta2=0.999)
+# optim = ts.optimizers.Nadam(lr=0.0005, beta1=0.9, beta2=0.999)
 
 model.compile(loss=loss, optim=optim, metric='accuracy')
 model.fit(train_images, train_labels, epochs=10, batch_size=32)
